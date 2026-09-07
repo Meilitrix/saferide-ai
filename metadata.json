@@ -1,0 +1,10 @@
+{
+  "name": "Remix Abhi AI",
+  "description": "Ride-hailing application with real-time ride tracking, live audio safety monitoring, and automated incident reporting powered by AI.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

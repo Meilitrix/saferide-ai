@@ -1,0 +1,49 @@
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environment ──
+venv/
+.venv/
+env/
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Audio Safety AI: generated data ──
+saved_journeys/
+_audio_chunks/
+_record_state.json
+ai_result.json
+*.wav
+!index.html
+
+# ── Models (too large for GitHub) ──
+*.h5
+*.pb
+*.onnx
+*.pkl
+models/
+train_model/models/
+
+# ── Backups & setup scripts ──
+*_backup*
+github_login.bat
+github_setup.bat
+
+# ── Logs ──
+*.log
+*.txt
+!requirements.txt

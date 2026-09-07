@@ -1,0 +1,50 @@
+﻿# Node.js
+node_modules/
+build/
+dist/
+coverage/
+*.log
+
+# Environment
+.env*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python (audio-safety-ai subfolder)
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+.venv/
+
+# Audio Safety AI: generated data
+saved_journeys/
+_audio_chunks/
+_record_state.json
+ai_result.json
+*.wav
+!index.html
+
+# Models (too large for GitHub)
+*.h5
+*.pb
+*.onnx
+*.pkl
+models/
+train_model/models/
+
+# Backups & setup scripts
+*_backup*
+github_login.bat
+github_setup.bat
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,188 @@
+export type RideStatus =
+  | "WELCOME_LANDING"
+  | "SELECTING_DESTINATION"
+  | "ROUTE_SELECTION"
+  | "SEARCHING_DRIVER"
+  | "CHOOSING_DRIVER"
+  | "DRIVER_ASSIGNED"
+  | "IN_TRIP"
+  | "TRIP_COMPLETED";
+
+export type ThreatLevel = "NORMAL" | "MONITORING" | "ELEVATED" | "CRITICAL_SOS";
+
+export interface LocationItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  address: string;
+  lat: number;
+  lng: number;
+  city: "Lahore" | "Karachi" | "Islamabad";
+  category: "airport" | "transit" | "business" | "entertainment" | "popular";
+}
+
+export interface RideOption {
+  id: string;
+  name: string;
+  tier: string;
+  description: string;
+  capacity: number;
+  etaMin: number;
+  basePrice: number; // in PKR (Rs.)
+  price: number; // in PKR (Rs.)
+  safetyTier: string;
+  carType: string;
+  iconType: "compact" | "comfort" | "shield" | "xl" | "female";
+  isFemaleOnlyFleet?: boolean;
+}
+
+export interface DriverProfile {
+  id: string;
+  name: string;
+  gender: "female" | "male";
+  isFemaleDriver: boolean;
+  rating: number;
+  totalTrips: number;
+  carModel: string;
+  carColor: string;
+  licensePlate: string;
+  photoUrl: string;
+  phone: string;
+  audioSafetyCertified: boolean;
+  activeBadge: string;
+  fareOfferPkr: number; // inDrive-style bid in PKR
+  distanceKm: number;
+  etaMinutes: number;
+}
+
+export interface AcousticEvent {
+  id: string;
+  timestamp: string;
+  type?: "ENGINE_AMBIENT" | "TRAFFIC_HONK" | "RICKSHAW_MOTOR" | "VOICE_SPEECH" | "SHOUTING" | "DISTRESS_CRY";
+  category?: string;
+  decibels: number;
+  isRegularJourneyNoise?: boolean;
+  isFilteredAsSafe?: boolean;
+  label: string;
+  description: string;
+}
+
+export interface SpeechTranscriptEntry {
+  id: string;
+  timestamp: string;
+  speaker: "Rider (Aap)" | "Captain (Driver)" | "Unknown Ambient";
+  text: string;
+  tone: "Calm" | "Neutral" | "Irritated" | "Agitated" | "Hostile" | "Screaming" | "Pleading" | "Screaming/Pleading" | "Pleading/Emergency";
+  distressFlag: boolean;
+  detectedKeywords: string[];
+}
+
+export interface RiskPattern {
+  id: string;
+  timestamp: number; // ms
+  timeString?: string;
+  type: "ELEVATED_ARGUMENT" | "THREATENING_TONE" | "DISTRESS_KEYWORD" | "ROUTE_DEVIATION_DISPUTE" | "DOOR_LOCK_PANIC" | string;
+  severity?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | string;
+  description?: string;
+  decibels?: number;
+  triggerSnippet?: string;
+}
+
+export interface AudioSampleChunk {
+  timestamp: number;
+  decibels: number;
+  threatLevel: ThreatLevel;
+  distressScore: number;
+  category: "REGULAR_ENGINE_TRAFFIC" | "TRAFFIC_HONKS" | "SUSPICIOUS_OUTBURSTS" | "DISTRESS_CRY";
+  riderTone: string;
+  driverTone: string;
+  detectedKeywords: string[];
+  snippet: string;
+  escalationDetected: boolean;
+}
+
+export interface IncidentReport {
+  incidentId: string;
+  timestamp: string;
+  isoTime: string;
+  severity: ThreatLevel;
+  category: "NONE" | "VERBAL_ABUSE" | "HARASSMENT" | "VIOLENT_ACTIVITY" | "DIRECT_DISTRESS_KEYWORD" | "VOICE_DISTRESS_SCREAM";
+  summary: string;
+  detectedKeywords: string[];
+  transcriptSnippet: string;
+  riderTone: string;
+  driverTone: string;
+  backgroundAcoustic: string;
+  distressScore: number;
+  gpsCoordinates: {
+    lat: number;
+    lng: number;
+    address: string;
+    city?: string;
+  };
+  vehicleDetails: {
+    driverName: string;
+    vehicle: string;
+    plate: string;
+    riderName: string;
+    driverPhone?: string;
+  };
+  emergencyDispatched: boolean;
+  dispatchUnit?: string;
+  dialedNumber?: string;
+  actionsTaken: string[];
+}
+
+export interface PaymentBreakdown {
+  baseFare: number;
+  distanceTime: number;
+  abhiRideShieldFee: number;
+  tollsAndSurge: number;
+  discount: number;
+  total: number;
+}
+
+export type PaymentMethod = "abhi_pay" | "jazzcash" | "easypaisa" | "credit_card" | "cash";
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  isPrimary: boolean;
+  autoCallOnSos: boolean;
+  autoSmsGpsOnSos: boolean;
+}
+
+export interface AIFeedbackRecord {
+  id: string;
+  timestamp: string;
+  rating: number; // 1 to 5
+  speechAccuracy?: "exceptional" | "accurate" | "needs_improvement";
+  speechDetectionAccuracy?: "exceptional" | "accurate" | "needs_improvement";
+  noiseFilteringRating: "effective" | "moderate" | "false_positives";
+  usefulnessScore: number; // 1-10
+  comments: string;
+  scenarioEncountered: string;
+}
+
+// ── Route types ──────────────────────────────────────────────────────────────
+
+export type RouteSafetyLevel = "safe" | "moderate" | "less_safe";
+
+export interface RouteOption {
+  id: string;
+  geometry: [number, number][]; // [lat, lng] pairs
+  distanceKm: number;
+  durationMin: number;
+  safetyLevel: RouteSafetyLevel;
+  safetyScore: number; // 0-100, higher = safer
+  summary: string; // e.g. "Via Canal Bank Road"
+}
+
+export interface DeviationAlert {
+  isActive: boolean;
+  deviationMeters: number;
+  durationSeconds: number;
+  acknowledged: boolean;
+}
