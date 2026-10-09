@@ -2,6 +2,11 @@
 
 const AUDIO_SERVER = "http://localhost:5004";
 
+// The engine's dial runs 0..13, where 13 == CRITICAL (see scoring_engine
+// DIAL_LEVELS: NORMAL 0, CONCERNING 2, ELEVATED 5, HIGH RISK 9, CRITICAL 13).
+// The gauge is drawn as a percentage of THAT scale, not an invented one.
+const DIAL_FULL_SCALE = 13;
+
 interface AudioSafetyResult {
   status: string;
   confidence: number;
@@ -62,18 +67,25 @@ export function useAudioSafety(
       setLastResult(data);
       setDialLabel(data.dial_label || "NORMAL");
 
-      const score = Math.min(100, (data.dial_score / 10) * 100);
+      const score = Math.min(100, (data.dial_score / DIAL_FULL_SCALE) * 100);
       setDistressScore(score);
 
       if (data.transcript) {
         setTranscript((prev) => prev + " " + data.transcript);
       }
 
-      if (data.dial_score >= 7 || data.status === "DANGER") {
+      // Threat level follows the BRAIN's own dial label, so the app and the
+      // engine can never disagree.  The old code divided by 10 (so the gauge
+      // read CRITICAL at dial 8, which the engine calls HIGH RISK) and treated
+      // status === "DANGER" as an emergency -- the legacy whole-file
+      // classifier flags engine/road noise as DANGER at ~90%, which fired a
+      // fake SOS while the dial sat at 0.  Evidence must come from the dial.
+      const level = (data.dial_label || "NORMAL").trim().toUpperCase();
+      if (level === "CRITICAL" || level === "HIGH RISK") {
         onThreatUpdate("CRITICAL_SOS", score);
-      } else if (data.dial_score >= 4) {
+      } else if (level === "ELEVATED") {
         onThreatUpdate("ELEVATED", score);
-      } else if (data.dial_score >= 2) {
+      } else if (level === "CONCERNING") {
         onThreatUpdate("MONITORING", score);
       } else {
         onThreatUpdate("NORMAL", score);
@@ -129,11 +141,10 @@ export function useAudioSafety(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ journey_id: journeyIdRef.current }),
       });
-      await fetch(`${AUDIO_SERVER}/toggle_recording`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recording: true }),
-      });
+      // This app deliberately does NOT call /toggle_recording: audio is
+      // analysed in 3-second chunks and nothing is stored here.  Journey
+      // recording is a separate opt-in feature of the analysis dashboard,
+      // used only to collect training samples.
 
       processor.onaudioprocess = (e) => {
         if (!monitoringRef.current) return;

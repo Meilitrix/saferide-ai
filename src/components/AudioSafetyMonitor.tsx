@@ -141,6 +141,7 @@ export const AudioSafetyMonitor: React.FC<AudioSafetyMonitorProps> = ({
           <DangerGauge
             score={distressScore}
             label={dialLabel || threatLevel}
+            dialScore={lastResult?.dial_score}
             onClick={onOpenDashboard}
             isExpanded={showDetails}
           />

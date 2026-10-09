@@ -3,20 +3,35 @@
 interface DangerGaugeProps {
   score: number;
   label: string;
+  dialScore?: number;
   onClick?: () => void;
   isExpanded?: boolean;
 }
 
-const getGaugeColor = (score: number) => {
-  if (score >= 80) return { arc: "#ef4444", text: "#ef4444", label: "CRITICAL" };
-  if (score >= 60) return { arc: "#f97316", text: "#f97316", label: "HIGH RISK" };
-  if (score >= 40) return { arc: "#eab308", text: "#eab308", label: "ELEVATED" };
-  if (score >= 20) return { arc: "#06b6d4", text: "#06b6d4", label: "CONCERNING" };
+// The engine owns the level NAMES; this gauge only owns the colors.
+// Levels come from scoring_engine.DIAL_LEVELS via the dial_label field.
+const LEVEL_COLORS: Record<string, { arc: string; text: string }> = {
+  NORMAL: { arc: "#22c55e", text: "#22c55e" },
+  CONCERNING: { arc: "#06b6d4", text: "#06b6d4" },
+  ELEVATED: { arc: "#eab308", text: "#eab308" },
+  "HIGH RISK": { arc: "#f97316", text: "#f97316" },
+  CRITICAL: { arc: "#ef4444", text: "#ef4444" },
+};
+
+const getGaugeStyle = (label: string, score: number) => {
+  const known = LEVEL_COLORS[label.trim().toUpperCase()];
+  if (known) return { ...known, label: label.trim().toUpperCase() };
+  // Fallback for non-engine labels (e.g. a manual SOS): thresholds expressed
+  // as a share of the engine's full dial range, where 13 == 100%.
+  if (score >= 100) return { arc: "#ef4444", text: "#ef4444", label: "CRITICAL" };
+  if (score >= 69) return { arc: "#f97316", text: "#f97316", label: "HIGH RISK" };
+  if (score >= 38) return { arc: "#eab308", text: "#eab308", label: "ELEVATED" };
+  if (score >= 15) return { arc: "#06b6d4", text: "#06b6d4", label: "CONCERNING" };
   return { arc: "#22c55e", text: "#22c55e", label: "NORMAL" };
 };
 
-export const DangerGauge: React.FC<DangerGaugeProps> = ({ score, label, onClick, isExpanded }) => {
-  const colors = getGaugeColor(score);
+export const DangerGauge: React.FC<DangerGaugeProps> = ({ score, label, dialScore, onClick, isExpanded }) => {
+  const colors = getGaugeStyle(label, score);
   const needleAngle = -90 + (Math.min(100, Math.max(0, score)) / 100) * 180;
   const arcPercent = Math.min(100, Math.max(0, score)) / 100;
   const arcLength = 125.6;
@@ -47,7 +62,9 @@ export const DangerGauge: React.FC<DangerGaugeProps> = ({ score, label, onClick,
       </svg>
       <div className="text-center -mt-2">
         <span className="text-lg font-black tracking-wider" style={{ color: colors.text }}>{colors.label}</span>
-        <div className="text-[10px] text-slate-500 font-mono mt-0.5">SCORE: {Math.round(score)}/100</div>
+        <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+          DIAL: {typeof dialScore === "number" ? dialScore.toFixed(1) : ((score * 13) / 100).toFixed(1)} / 13
+        </div>
       </div>
       {onClick && (
         <div className="text-[9px] text-slate-600 text-center mt-1">{isExpanded ? "Tap to collapse" : "Tap for details"}</div>

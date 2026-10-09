@@ -58,9 +58,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-3 cursor-pointer select-none group"
             title="Go to Abhi AI Home"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Abhi AI"
+              className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,211,238,0.35)] group-hover:scale-105 transition-transform"
+            />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xl font-bold tracking-tight text-white">
