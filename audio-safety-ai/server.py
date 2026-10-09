@@ -112,7 +112,7 @@ def _risk_clear():
         _risk_history = []
 
 
-from scoring_engine import DangerScorer
+from safety_agent import SafetyAgent
 
 # Lazy-load YAMNet on first request
 _classify_fn = None
@@ -166,7 +166,7 @@ _session = {
     "recording": False,       # True only when user explicitly consented to record
     "journey_id": "",
     "total_chunks": 0,
-    "scorer": None,           # DangerScorer instance (per-session)
+    "agent": None,            # SafetyAgent instance (per-session) — the agentic AI brain
 }
 
 
@@ -192,9 +192,10 @@ def start_session():
     _session["recording"] = False        # monitor-only by default
     _session["journey_id"] = jid
     _session["total_chunks"] = 0
-    _session["scorer"] = DangerScorer()   # fresh scorer per session
+    _session["agent"] = SafetyAgent()    # fresh agentic AI per session — learns this ride's baseline
     _buffer_clear()
     _risk_clear()
+    print(f"[Agent] New SafetyAgent created for journey {jid} — will learn baseline in first 60s")
 
     return jsonify({"ok": True, "journey_id": jid})
 
@@ -306,12 +307,14 @@ def upload_chunk():
         transcript = speech_info.get("transcript", "")
         keywords = speech_info.get("keywords", [])
 
-        # ── Danger Dial scoring ──
-        # Map keyword risk to word_severity (0-3) for the scorer
+        # ── Agentic AI scoring ──
+        # Pass RAW audio features to the agent — NO fixed thresholds.
+        # The agent decides severity based on what it learned during baseline.
+        # Only YAMNet danger classification and distress keywords are pre-computed.
+        
+        # Word severity from browser transcription (this is reliable — it's text matching)
         kw_risk = speech_info.get("risk_score", 0)
         word_severity = min(3, int(kw_risk))
-
-        # Also accept word_severity from frontend if provided
         frontend_ws = request.form.get("word_severity")
         if frontend_ws is not None:
             try:
@@ -319,17 +322,65 @@ def upload_chunk():
             except (ValueError, TypeError):
                 pass
 
-        scorer = _session.get("scorer")
-        if scorer is None:
-            scorer = DangerScorer()
-            _session["scorer"] = scorer
+        # Event severity from YAMNet danger classification (this is reliable — trained model)
+        event_severity = 0
+        if raw_status == "DANGER":
+            if confidence > 0.8:
+                event_severity = 2  # high-confidence danger sound
+            else:
+                event_severity = 1  # moderate danger sound
+        
+        # Voice severity: DO NOT compute from fixed thresholds.
+        # Pass 0 and let the agent decide based on its learned baseline.
+        # The agent knows what "normal" energy/peak looks like for THIS mic.
+        voice_severity = 0  # agent will compute this from baseline
 
-        dial_result = scorer.process_chunk(
-            word_severity=word_severity,
+        # Get the SafetyAgent
+        agent = _session.get("agent")
+        if agent is None:
+            agent = SafetyAgent()
+            _session["agent"] = agent
+            print(f"[Agent] SafetyAgent created for journey {_session.get('journey_id', 'unknown')}")
+
+        # Process chunk — agent computes voice_severity from its learned baseline
+        agent_result = agent.process_chunk(
             energy=raw_energy,
             peak=raw_peak,
             yamnet_top_name=sound_name,
+            word_severity=word_severity,
+            voice_severity=voice_severity,   # 0 — agent overrides from baseline
+            event_severity=event_severity
         )
+        
+        # Get the agent-computed voice severity for the response
+        voice_severity = agent_result.get("agent_voice_severity", 0)
+
+        # Map agent result to the response format expected by frontend
+        # Determine event_type based on actual YAMNet classification, not just anomaly
+        if raw_status == "DANGER":
+            event_type = sound_name.lower()  # use actual detected sound (scream, crash, etc.)
+        elif voice_severity >= 2:
+            event_type = "screaming"
+        elif voice_severity >= 1:
+            event_type = "raised_voice"
+        elif word_severity >= 1:
+            event_type = "distress_keywords"
+        else:
+            event_type = "none"
+        
+        dial_result = {
+            "accumulated_score": agent_result["dial_score"],
+            "dial_level": agent_result["dial_level"],
+            "dial_label": agent_result["dial_label"],
+            "word_severity": word_severity,
+            "voice_severity": voice_severity,
+            "event_severity": event_severity,
+            "chunk_score": agent_result["signal_breakdown"].get("base_signal_score", 0),
+            "repetition_bonus": 0,  # agent handles this via patterns
+            "escalation_bonus": agent_result["signal_breakdown"].get("pattern_modifier", 0),
+            "combination_bonus": 0,  # agent handles this via signal combination
+            "event_type": event_type
+        }
 
         # ── Compute chunk risk score (0-4) for the gauge (legacy) ──
         chunk_risk = 0
@@ -347,14 +398,23 @@ def upload_chunk():
         _risk_add(chunk_risk)
         risk_level = _risk_level()
 
-        # ── Log result ──
+        # ── Log result with agent insights ──
         dial_icon = {"NORMAL": "  ", "CONCERNING": "  ",
                      "ELEVATED": "  ", "HIGH RISK": "  ",
                      "CRITICAL": "  "}.get(dial_result["dial_label"], "  ")
         icon = "DANGER" if stable_status == "DANGER" else "OK"
+        baseline_status = "learning" if agent_result["baseline_progress"] < 1.0 else "established"
         print(f"  [{icon}] Chunk #{chunk_idx}: {sound_name} -> {stable_status} "
               f"({confidence*100:.0f}%)  |  Dial: {dial_result['dial_label']} "
-              f"(score={dial_result['accumulated_score']:.1f})")
+              f"(score={dial_result['accumulated_score']:.1f})  |  "
+              f"Agent: phase={agent_result['ride_phase']}, baseline={baseline_status}, "
+              f"anomaly={agent_result['anomaly_score']:.2f}")
+
+        # Log detected patterns
+        patterns = agent_result.get("patterns", {})
+        active_patterns = [k for k, v in patterns.items() if v and k != "pattern_severity_modifier"]
+        if active_patterns:
+            print(f"  [PATTERNS] {', '.join(active_patterns)}")
 
         # ── Alert on stable DANGER ──
         if stable_status == "DANGER":
@@ -364,7 +424,8 @@ def upload_chunk():
             print(f"  [DIAL ALERT] {dial_result['dial_label']} -- "
                   f"words={dial_result['word_severity']} "
                   f"voice={dial_result['voice_severity']} "
-                  f"event={dial_result['event_severity']}")
+                  f"event={dial_result['event_severity']} "
+                  f"anomaly={agent_result['anomaly_score']:.2f}")
 
         # Add custom model info to response
         custom_response = {}
@@ -397,6 +458,13 @@ def upload_chunk():
             "repetition_bonus": round(dial_result["repetition_bonus"], 2),
             "escalation_bonus": round(dial_result["escalation_bonus"], 2),
             "combination_bonus": round(dial_result["combination_bonus"], 2),
+            # -- Agentic AI fields (new) --
+            "anomaly_score": round(agent_result["anomaly_score"], 3),
+            "baseline_progress": round(agent_result["baseline_progress"], 2),
+            "ride_phase": agent_result["ride_phase"],
+            "patterns": agent_result["patterns"],
+            "signal_breakdown": agent_result["signal_breakdown"],
+            "anomaly_details": agent_result["anomaly_details"],
             # -- Custom classifier fields --
             **custom_response,
         })
@@ -428,6 +496,13 @@ def upload_chunk():
             "repetition_bonus": 0,
             "escalation_bonus": 0,
             "combination_bonus": 0,
+            # ── Agentic AI fields (safe defaults on error) ──
+            "anomaly_score": 0.0,
+            "baseline_progress": 0.0,
+            "ride_phase": "normal",
+            "patterns": {},
+            "signal_breakdown": {},
+            "anomaly_details": {},
         })
 
 
@@ -526,14 +601,14 @@ def _combine_journey(journey_id):
 if __name__ == "__main__":
     print()
     print("=" * 56)
-    print("  🛡️  AUDIO SAFETY AI — Native Web Server")
+    print("  AUDIO SAFETY AI — Agentic Safety System")
     print("=" * 56)
     print(f"  Frontend :  http://localhost:5004")
-    print(f"  AI Core  :  YAMNet + Custom SVM (sfx_training)")
-    print(f"  Custom   :  train_model/models/danger_classifier_latest.pkl")
-    print(f"  Threshold:  {CONFIDENCE_THRESHOLD*100:.0f}% confidence")
-    print(f"  Smoothing:  {REQUIRED_CONSECUTIVE} consecutive chunks")
-    print(f"  Dial     :  Danger Scorer (temporal accumulation + decay)")
+    print(f"  AI Core  :  YAMNet + SafetyAgent (adaptive learning)")
+    print(f"  Agent    :  Per-ride baseline + pattern detection")
+    print(f"  Baseline :  First 60s learns 'normal' for THIS car")
+    print(f"  Patterns :  Escalation, coercion, recovery detection")
+    print(f"  Scoring  :  Anomaly-based (relative to baseline)")
     print(f"  Storage  :  {JOURNEY_DIR}")
     print("=" * 56)
     print()

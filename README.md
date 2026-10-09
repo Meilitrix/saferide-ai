@@ -127,5 +127,3 @@ remix-abhi-ai/
 MIT
 
 ---
-
-*Built for Alibaba Cloud AI Hackathon Pakistan 2026*

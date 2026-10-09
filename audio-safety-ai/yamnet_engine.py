@@ -343,11 +343,21 @@ def classify_audio(audio, sr=16000):
                 danger_reason = "Screaming (pitch detected)"
 
     # ── Signal C: Sudden silence (car stopping) ─────────────────────
-    if energy_signal == "SILENCE" and energy_level > 0.7:
-        silence_conf = 0.5 + energy_level * 0.3
-        if silence_conf > danger_conf:
-            danger_conf = silence_conf
-            danger_reason = "Sudden silence (vehicle stop?)"
+    # DISABLED: silence alone should never trigger DANGER.
+    # Normal speech/music pauses cause energy drops that look like
+    # "sudden silence" and create false positives.
+    # if energy_signal == "SILENCE" and energy_level > 0.7:
+    #     silence_conf = 0.5 + energy_level * 0.3
+    #     ...
+
+    # ── Signal D: Loud burst (sudden impact / slap within chunk) ────
+    # A segment within the chunk that is 5x louder than average
+    # indicates a sudden impact (slap, punch, object dropping).
+    if energy_signal == "LOUD_BURST" and energy_level > 0.5:
+        burst_conf = 0.5 + energy_level * 0.3
+        if burst_conf > danger_conf:
+            danger_conf = burst_conf
+            danger_reason = "Loud impact burst"
 
     # ── Final decision ──────────────────────────────────────────────
     if danger_conf >= DANGER_THRESHOLD:
