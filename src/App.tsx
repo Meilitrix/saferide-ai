@@ -307,6 +307,20 @@ export default function App() {
     setIsAudioPermissionModalOpen(false);
   };
 
+  // Rider-initiated stop / start.  The rider decides whether the mic is open,
+  // at any point in the trip - not only at the consent modal.
+  const handleToggleAudioMonitoring = () => {
+    if (isAudioMonitoringActive) {
+      audioSafety.stopMonitoring();
+      setIsAudioMonitoringActive(false);
+      setThreatLevel("NORMAL");
+      setDistressScore(0);
+    } else {
+      setIsAudioMonitoringActive(true);
+      audioSafety.startMonitoring();
+    }
+  };
+
   // ── SOS handlers ─────────────────────────────────────────────────
   const handleTriggerSosPrompt = (riskCount: number) => {
     setSosRiskCount(riskCount);
@@ -546,6 +560,7 @@ export default function App() {
                   transcript={audioSafety.transcript}
                   isAudioMonitoring={isAudioMonitoringActive}
                   onOpenDashboard={() => setIsDashboardModalOpen(true)}
+                  onToggleAudioMonitoring={handleToggleAudioMonitoring}
                 />
               </div>
             </div>

@@ -48,6 +48,7 @@ interface AudioSafetyMonitorProps {
   transcript?: string;
   isAudioMonitoring?: boolean;
   onOpenDashboard?: () => void;
+  onToggleAudioMonitoring?: () => void;
   getAudioLevels?: () => number[];
 }
 
@@ -68,6 +69,7 @@ const STATUS_MAP: Record<ThreatLevel, { text: string; color: string; bg: string;
 };
 
 export const AudioSafetyMonitor: React.FC<AudioSafetyMonitorProps> = ({
+  onToggleAudioMonitoring,
   threatLevel,
   distressScore,
   onTriggerSos,
@@ -144,6 +146,28 @@ export const AudioSafetyMonitor: React.FC<AudioSafetyMonitorProps> = ({
               Help me
             </button>
           </div>
+        </div>
+      )}
+
+      {/* The rider's own control - shown whether or not the mic is open.
+          Consent you cannot withdraw mid-ride is not consent, it is a setting. */}
+      {onToggleAudioMonitoring && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 mb-3">
+          <span className="text-[11px] text-slate-400 leading-tight">
+            {isAudioMonitoring
+              ? "Audio Safety is listening to this ride"
+              : "Paused - the microphone is off"}
+          </span>
+          <button
+            onClick={onToggleAudioMonitoring}
+            className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+              isAudioMonitoring
+                ? "bg-slate-800 hover:bg-slate-700 text-slate-200"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white"
+            }`}
+          >
+            {isAudioMonitoring ? "Stop listening" : "Start listening"}
+          </button>
         </div>
       )}
 
