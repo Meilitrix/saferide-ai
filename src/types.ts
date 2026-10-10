@@ -154,16 +154,15 @@ export interface EmergencyContact {
   autoSmsGpsOnSos: boolean;
 }
 
+// Only questions a rider can actually perceive.  Model accuracy is measured in
+// the labelling dashboard, not by asking passengers to grade detection.
 export interface AIFeedbackRecord {
   id: string;
   timestamp: string;
-  rating: number; // 1 to 5
-  speechAccuracy?: "exceptional" | "accurate" | "needs_improvement";
-  speechDetectionAccuracy?: "exceptional" | "accurate" | "needs_improvement";
-  noiseFilteringRating: "effective" | "moderate" | "false_positives";
-  usefulnessScore: number; // 1-10
+  rating: number; // 1-5, the ride itself
+  falseAlarms: "none" | "once" | "repeatedly";
+  dialClarity: "clear" | "somewhat" | "confusing";
   comments: string;
-  scenarioEncountered: string;
 }
 
 // ── Route types ──────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 ﻿import React, { useState } from "react";
-import { AlertOctagon, PhoneCall, Shield, ShieldAlert, MapPin, Activity, Maximize2 } from "lucide-react";
+import { AlertOctagon, PhoneCall, Shield, ShieldAlert, MapPin, Maximize2 } from "lucide-react";
 import { DangerGauge } from "./DangerGauge";
 import { AudioWaveBox } from "./AudioWaveBox";
 import {
@@ -219,17 +219,6 @@ export const AudioSafetyMonitor: React.FC<AudioSafetyMonitorProps> = ({
             </div>
           )}
 
-          {/* Custom AI model result */}
-          {lastResult.custom_label && (
-            <div className="flex items-center gap-2 text-[10px]">
-              <Activity className="w-3 h-3 text-purple-400" />
-              <span className="text-slate-400">Custom AI:</span>
-              <span className={`font-bold ${lastResult.custom_label === "DANGER" ? "text-red-400" : "text-emerald-400"}`}>
-                {lastResult.custom_label}
-              </span>
-              <span className="text-slate-500 font-mono">({Math.round((lastResult.custom_confidence ?? 0) * 100)}%)</span>
-            </div>
-          )}
         </div>
       )}
 
