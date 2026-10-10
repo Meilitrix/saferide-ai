@@ -329,7 +329,11 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   const routeDist = activeRoute?.distanceKm ?? 7.8;
   const remainingKm = Math.max(0.3, Number((routeDist * (1 - tripProgress / 100)).toFixed(1)));
   const remainingMinutes = Math.max(1, Math.ceil((activeRoute?.durationMin ?? 15) * (1 - tripProgress / 100)));
-  const speedKmH = rideStatus === "IN_TRIP" ? Math.round(44 + (tripProgress % 16)) : 0;
+  // Average speed derived from this route's real distance and drive time.
+  // Labelled "avg" so nobody reads it as a GPS-measured speed - the car
+  // marker is an animation, so an instantaneous speed would be a lie.
+  const durMin = Math.max(1, activeRoute?.durationMin ?? 15);
+  const avgKmH = rideStatus === "IN_TRIP" ? Math.round((routeDist / durMin) * 60) : 0;
 
   return (
     <div className="relative w-full h-[300px] sm:h-[350px] lg:h-[400px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl select-none bg-slate-950">
@@ -356,7 +360,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
               <div className="h-4 w-px bg-slate-700" />
               <div className="flex items-center gap-1 text-slate-300 font-mono text-[11px]">
                 <Gauge className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{speedKmH} km/h</span>
+                <span>{avgKmH} km/h avg</span>
               </div>
             </>
           )}

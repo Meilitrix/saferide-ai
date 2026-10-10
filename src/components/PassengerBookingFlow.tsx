@@ -398,7 +398,7 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
                 <span className="text-[11px] font-bold text-amber-400">★ {selectedDriver.rating}</span>
               </div>
               <p className="text-[11px] text-slate-400">
-                {selectedDriver.carModel} · {selectedDriver.carColor}
+                {selectedDriver.carModel}
               </p>
             </div>
           </div>

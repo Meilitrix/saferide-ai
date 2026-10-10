@@ -601,16 +601,13 @@ export default function App() {
                         <span className="text-xs text-amber-400 font-semibold">★ {selectedDriver.rating}</span>
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {selectedDriver.carModel} ({selectedDriver.carColor})
+                        {selectedDriver.carModel}
                       </p>
                       <div className="text-xs text-cyan-400 font-mono font-bold mt-1">
                         {selectedDriver.licensePlate}
                       </div>
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-500 text-center">
-                    In emergency, SOS alerts your contacts + police automatically
-                  </p>
                 </div>
               </div>
 
