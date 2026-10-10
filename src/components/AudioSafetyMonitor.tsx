@@ -1,6 +1,7 @@
 ﻿import React, { useState } from "react";
-import { AlertOctagon, PhoneCall, Heart, Shield, ShieldAlert, MapPin, Activity, Maximize2 } from "lucide-react";
+import { AlertOctagon, PhoneCall, Shield, ShieldAlert, MapPin, Activity, Maximize2 } from "lucide-react";
 import { DangerGauge } from "./DangerGauge";
+import { AudioWaveBox } from "./AudioWaveBox";
 import {
   ThreatLevel,
   IncidentReport,
@@ -47,11 +48,21 @@ interface AudioSafetyMonitorProps {
   transcript?: string;
   isAudioMonitoring?: boolean;
   onOpenDashboard?: () => void;
+  getAudioLevels?: () => number[];
 }
+
+// Same palette as the dial, so the strip and the needle agree.
+const WAVE_COLOR: Record<string, string> = {
+  NORMAL: "#10b981",
+  CONCERNING: "#84CC16",
+  ELEVATED: "#EAB308",
+  "HIGH RISK": "#F97316",
+  CRITICAL: "#EF4444",
+};
 
 const STATUS_MAP: Record<ThreatLevel, { text: string; color: string; bg: string; border: string }> = {
   NORMAL: { text: "All clear", color: "text-emerald-400", bg: "bg-emerald-950/60", border: "border-emerald-800/60" },
-  MONITORING: { text: "Police watching", color: "text-amber-400", bg: "bg-amber-950/40", border: "border-amber-800/50" },
+  MONITORING: { text: "Hearing something", color: "text-amber-400", bg: "bg-amber-950/40", border: "border-amber-800/50" },
   ELEVATED: { text: "Elevated risk — SOS may trigger", color: "text-orange-400", bg: "bg-orange-950/60", border: "border-orange-700/60" },
   CRITICAL_SOS: { text: "EMERGENCY SOS", color: "text-red-400", bg: "bg-red-950/70", border: "border-red-600" },
 };
@@ -73,6 +84,7 @@ export const AudioSafetyMonitor: React.FC<AudioSafetyMonitorProps> = ({
   lastResult,
   transcript,
   isAudioMonitoring,
+  getAudioLevels,
   onOpenDashboard,
 }) => {
   const [slideConfirm, setSlideConfirm] = useState(false);
@@ -144,6 +156,11 @@ export const AudioSafetyMonitor: React.FC<AudioSafetyMonitorProps> = ({
             dialScore={lastResult?.dial_score}
             onClick={onOpenDashboard}
             isExpanded={showDetails}
+          />
+          <AudioWaveBox
+            getLevels={getAudioLevels}
+            active={!!isAudioMonitoring}
+            color={(WAVE_COLOR[(dialLabel || "NORMAL").trim().toUpperCase()] || "#10b981")}
           />
           {/* Open Dashboard Button */}
           {onOpenDashboard && (
@@ -237,7 +254,7 @@ export const AudioSafetyMonitor: React.FC<AudioSafetyMonitorProps> = ({
           <div>
             <span className={`text-sm font-black ${status.color}`}>{status.text}</span>
             <p className="text-[10px] text-slate-400 mt-0.5">
-              {threatLevel === "NORMAL" ? "Audio monitored" : threatLevel === "MONITORING" ? "Police watching your ride" : threatLevel === "ELEVATED" ? "SOS may trigger if risk increases" : "Emergency services alerted"}
+              {threatLevel === "NORMAL" ? "Audio monitored" : threatLevel === "MONITORING" ? "Heard something" : threatLevel === "ELEVATED" ? "SOS may trigger if risk increases" : "Emergency services alerted"}
             </p>
           </div>
         </div>

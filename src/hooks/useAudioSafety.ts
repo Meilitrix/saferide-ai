@@ -45,6 +45,8 @@ export function useAudioSafety(
   const [transcript, setTranscript] = useState("");
 
   const streamRef = useRef<MediaStream | null>(null);
+  // Rolling live loudness (0..1) for the waveform box.  Newest at the end.
+  const levelsRef = useRef<number[]>(new Array(28).fill(0));
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const chunkBufRef = useRef<Float32Array[]>([]);
   const chunkIdxRef = useRef(0);
@@ -150,6 +152,21 @@ export function useAudioSafety(
         if (!monitoringRef.current) return;
         const data = new Float32Array(e.inputBuffer.getChannelData(0));
         chunkBufRef.current.push(new Float32Array(data));
+        // Same buffer, sliced finer, gives a smooth display.  Pure maths on
+        // audio we already hold - no extra node, no second mic, no risk to capture.
+        const SLICE = 4;
+        const step = Math.max(1, Math.floor(data.length / SLICE));
+        for (let s = 0; s + step <= data.length; s += step) {
+          let peak = 0;
+          for (let i = s; i < s + step; i++) {
+            const v = Math.abs(data[i]);
+            if (v > peak) peak = v;
+          }
+          levelsRef.current.push(Math.min(1, peak * 2.2));
+        }
+        if (levelsRef.current.length > 28) {
+          levelsRef.current.splice(0, levelsRef.current.length - 28);
+        }
       };
 
       source.connect(processor);
@@ -195,5 +212,7 @@ export function useAudioSafety(
     return () => { stopMonitoring(); };
   }, [stopMonitoring]);
 
-  return { isMonitoring, distressScore, dialLabel, lastResult, transcript, startMonitoring, stopMonitoring };
+  const getAudioLevels = useCallback(() => levelsRef.current, []);
+
+  return { isMonitoring, distressScore, dialLabel, lastResult, transcript, startMonitoring, stopMonitoring, getAudioLevels };
 }

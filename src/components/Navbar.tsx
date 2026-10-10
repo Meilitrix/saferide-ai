@@ -7,7 +7,7 @@ import {
   Menu,
   X,
   CreditCard,
-  Heart,
+  Siren,
   Sparkles,
   PhoneCall,
   ChevronRight,
@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-950/60 text-red-300 border border-red-800/80 hover:bg-red-900/60 transition-colors"
               title="Manage Emergency SOS Contacts"
             >
-              <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400/30" />
+              <Siren className="w-3.5 h-3.5 text-red-400 fill-red-400/30" />
               <span className="hidden sm:inline">Emergency SOS:</span>
               <span className="font-bold bg-red-500 text-white text-[10px] px-1.5 py-0.2 rounded-full">
                 {emergencyContactCount}
@@ -212,7 +212,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 group-hover:bg-red-500/20 transition-colors">
-                      <Heart className="w-4 h-4" />
+                      <Siren className="w-4 h-4" />
                     </div>
                     <span className="text-xs font-bold text-white">Emergency Contacts</span>
                   </div>

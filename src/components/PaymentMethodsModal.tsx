@@ -6,7 +6,6 @@ import {
   Check,
   Plus,
   X,
-  ShieldCheck,
   Building,
   Smartphone,
 } from "lucide-react";
@@ -29,46 +28,32 @@ export const PaymentMethodsModal: React.FC<PaymentMethodsModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Ordered by what riders in Pakistan actually use.  No badges: if you have
+  // chosen cash, "most popular" is noise.  No invented wallet either.
   const paymentOptions = [
     {
+      id: "cash" as PaymentMethod,
+      name: "Cash to Driver",
+      subtitle: "Pay at the end of the trip",
+      icon: DollarSign,
+    },
+    {
       id: "jazzcash" as PaymentMethod,
-      name: "JazzCash Mobile Account",
-      subtitle: "Direct deduction via MPIN prompt",
-      badge: "Most Popular in PK",
-      badgeColor: "bg-red-500/20 text-red-300 border-red-500/30",
+      name: "JazzCash",
+      subtitle: "Send to the driver's mobile number",
       icon: Smartphone,
     },
     {
       id: "easypaisa" as PaymentMethod,
-      name: "Easypaisa Wallet",
-      subtitle: "Instant OTP 1-click payment",
-      badge: "Instant Approval",
-      badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+      name: "Easypaisa",
+      subtitle: "Send to the driver's mobile number",
       icon: Wallet,
     },
     {
-      id: "abhi_pay" as PaymentMethod,
-      name: "Abhi Pay SafeWallet™",
-      subtitle: "Rs. 1,450 balance available (with 5% ride cashback)",
-      badge: "Abhi Promo",
-      badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-      icon: ShieldCheck,
-    },
-    {
       id: "credit_card" as PaymentMethod,
-      name: "Debit / Credit Card (Visa / Mastercard / PayPak)",
-      subtitle: "Encrypted 3D Secure checkout",
-      badge: "Bank Grade",
-      badgeColor: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+      name: "Card (Visa / Mastercard / PayPak)",
+      subtitle: "Charged when the trip ends",
       icon: CreditCard,
-    },
-    {
-      id: "cash" as PaymentMethod,
-      name: "Cash to Driver",
-      subtitle: "Pay physical Pakistani Rupees upon trip completion",
-      badge: "Standard",
-      badgeColor: "bg-slate-700 text-slate-300 border-slate-600",
-      icon: DollarSign,
     },
   ];
 
@@ -89,7 +74,7 @@ export const PaymentMethodsModal: React.FC<PaymentMethodsModalProps> = ({
                 Payment Preferences
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Pakistan Wallets, Cards, and Cash options for Abhi Rides
+                Choose how you want to pay
               </p>
             </div>
           </div>
@@ -130,11 +115,6 @@ export const PaymentMethodsModal: React.FC<PaymentMethodsModalProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-white">
                         {opt.name}
-                      </span>
-                      <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${opt.badgeColor}`}
-                      >
-                        {opt.badge}
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   Phone,
-  Heart,
+  Siren,
   Trash2,
   UserPlus,
   X,
@@ -63,7 +63,7 @@ export const EmergencyContactsModal: React.FC<EmergencyContactsModalProps> = ({
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400">
-              <Heart className="w-4.5 h-4.5" />
+              <Siren className="w-4.5 h-4.5" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Who to alert in emergency?</h3>

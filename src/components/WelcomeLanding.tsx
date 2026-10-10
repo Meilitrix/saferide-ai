@@ -4,7 +4,7 @@ import {
   UserCheck,
   ChevronRight,
   ArrowRight,
-  Heart,
+  Siren,
   Shield,
   MapPin,
 } from "lucide-react";
@@ -86,7 +86,7 @@ export const WelcomeLanding: React.FC<WelcomeLandingProps> = ({
       <div className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
-            <Heart className="w-4 h-4" />
+            <Siren className="w-4 h-4" />
           </div>
           <span className="font-semibold text-white">Emergency SOS Contacts</span>
         </div>

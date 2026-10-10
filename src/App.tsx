@@ -40,7 +40,7 @@ import {
   RotateCcw,
   Sparkles,
   PhoneCall,
-  Heart,
+  Siren,
 } from "lucide-react";
 
 const INITIAL_EMERGENCY_CONTACTS: EmergencyContact[] = [
@@ -117,7 +117,7 @@ export default function App() {
   // ── Auto-SOS consecutive critical counter ─────────────────────
   const criticalCountRef = useRef(0);
   const autoSosTriggeredRef = useRef(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("jazzcash");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cash");
   const [feedbackRecords, setFeedbackRecords] = useState<AIFeedbackRecord[]>([]);
 
   // ── Emergency contacts (persisted) ───────────────────────────────
@@ -541,6 +541,7 @@ export default function App() {
                   onDeviationAcknowledge={handleDeviationAcknowledge}
                   onDeviationHelp={handleDeviationHelp}
                   dialLabel={audioSafety.dialLabel}
+          getAudioLevels={audioSafety.getAudioLevels}
                   lastResult={audioSafety.lastResult}
                   transcript={audioSafety.transcript}
                   isAudioMonitoring={isAudioMonitoringActive}
@@ -613,15 +614,14 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Emergency contacts - locked behind passcode */}
+              {/* Emergency contacts */}
               <div className="lg:col-span-7">
                 <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <Heart className="w-4 h-4 text-red-400" />
+                      <Siren className="w-4 h-4 text-red-400" />
                       Emergency Contacts
                     </span>
-                    <span className="text-[9px] text-slate-500 font-mono">🔒 Passcode protected</span>
                   </div>
                   <p className="text-[10px] text-slate-400">
                     {emergencyContacts.length} contacts saved. In emergency, SOS auto-alerts them with your GPS location.

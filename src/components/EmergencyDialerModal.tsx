@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   X,
   Radio,
-  Heart,
+  Siren,
   Send,
 } from "lucide-react";
 import { IncidentReport, EmergencyContact } from "../types";
@@ -154,7 +154,7 @@ export const EmergencyDialerModal: React.FC<EmergencyDialerModalProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
-                <Heart className="w-3.5 h-3.5 text-red-400" />
+                <Siren className="w-3.5 h-3.5 text-red-400" />
                 Pre-Saved Emergency Contacts (Zero-Dial Broadcast)
               </span>
               <span className="text-[10px] text-emerald-400 font-bold">

@@ -38,11 +38,11 @@ export const AudioSafetyPermissionModal: React.FC<AudioSafetyPermissionModalProp
         {/* Quick Customer-Friendly Summary */}
         <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
           <p className="leading-relaxed">
-            If a distress sound is detected, this trip can be escalated to emergency services automatically.
+            If it hears distress, the risk dial climbs — and at critical it starts the SOS flow.
           </p>
           <div className="flex items-center gap-1.5 text-[11px] text-cyan-300">
             <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>Audio is analysed in 3-second pieces and is not stored or uploaded.</span>
+            <span>Checks 3-second clips of sound. Nothing is saved.</span>
           </div>
         </div>
 
@@ -54,7 +54,7 @@ export const AudioSafetyPermissionModal: React.FC<AudioSafetyPermissionModalProp
             className="w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all"
           >
             <Mic className="w-4 h-4 text-slate-950" />
-            <span>Enable Audio Safety</span>
+            <span>Turn on Audio Safety</span>
           </button>
 
           <button
