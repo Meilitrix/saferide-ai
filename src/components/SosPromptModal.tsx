@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AlertOctagon, PhoneCall, ShieldCheck, Clock, Pause, Play } from "lucide-react";
+import { LifeBuoy, PhoneCall, ShieldCheck, Clock, Pause, Play } from "lucide-react";
 
 interface SosPromptModalProps {
   isOpen: boolean;
@@ -13,7 +13,8 @@ export const SosPromptModal: React.FC<SosPromptModalProps> = ({
   isOpen,
   onConfirmSos,
   onCancel,
-  riskCount,
+  // riskCount is intentionally not shown: App.tsx passes a fixed 3, so any
+  // number printed here would be invented rather than measured.
   emergencyNumber,
 }) => {
   const [countdown, setCountdown] = useState(25);
@@ -50,21 +51,21 @@ export const SosPromptModal: React.FC<SosPromptModalProps> = ({
       id="sos-prompt-modal"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn"
     >
-      <div className="bg-slate-900 border border-red-500/70 max-w-md w-full rounded-3xl p-6 shadow-2xl text-white space-y-5 relative">
+      <div className="bg-slate-900 border border-slate-700 max-w-md w-full rounded-3xl p-6 shadow-2xl text-white space-y-5 relative">
         {/* Header */}
         <div className="flex items-start gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-red-600/20 border border-red-500/40 text-red-400 flex items-center justify-center shrink-0">
-            <AlertOctagon className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 flex items-center justify-center shrink-0">
+            <LifeBuoy className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <span className="text-[11px] font-semibold text-red-400 bg-red-950/80 px-2 py-0.5 rounded border border-red-800/80">
-              Safety Check Triggered
+            <span className="text-[11px] font-semibold text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/50">
+              Safety check
             </span>
             <h2 className="text-xl font-bold text-white mt-1">
               Is everything alright?
             </h2>
             <p className="text-xs text-slate-300 mt-1">
-              {riskCount} risk patterns were detected in the last 60 seconds.
+              The ride monitor has been alarmed for the last minute.
             </p>
           </div>
         </div>
@@ -78,7 +79,7 @@ export const SosPromptModal: React.FC<SosPromptModalProps> = ({
                 <span className="text-amber-300 font-medium">Timer paused</span>
               ) : (
                 <>
-                  Auto-dialing Police in{" "}
+                  The emergency screen opens in{" "}
                   <strong className="text-white font-mono text-sm bg-slate-800 px-1.5 py-0.5 rounded">
                     {countdown}s
                   </strong>
@@ -103,25 +104,25 @@ export const SosPromptModal: React.FC<SosPromptModalProps> = ({
           <button
             id="sos-cancel-safe-btn"
             onClick={onCancel}
-            className="w-full py-3.5 px-4 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 hover:border-emerald-500/50 font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow transition-all"
+            className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow transition-all"
           >
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <span>Cancel — I am Safe / False Alarm</span>
+            <ShieldCheck className="w-5 h-5 text-white" />
+            <span>I am safe</span>
           </button>
 
           {/* Emergency SOS Call */}
           <button
             id="sos-confirm-yes-btn"
             onClick={onConfirmSos}
-            className="w-full py-3.5 px-4 bg-red-600 hover:bg-red-500 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-600/30 transition-all"
+            className="w-full py-3 px-4 bg-transparent hover:bg-rose-950/50 text-rose-300 border border-rose-500/50 font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition-all"
           >
-            <PhoneCall className="w-4 h-4 text-white" />
-            <span>Call Police {emergencyNumber} (Emergency SOS)</span>
+            <PhoneCall className="w-4 h-4 text-rose-300" />
+            <span>Call Police {emergencyNumber}</span>
           </button>
         </div>
 
         <p className="text-[11px] text-center text-slate-400">
-          Clicking "Cancel" resets the safety monitor back to normal.
+          "I am safe" closes this. The audio monitor keeps listening.
         </p>
       </div>
     </div>

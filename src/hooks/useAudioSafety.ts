@@ -33,6 +33,10 @@ interface UseAudioSafetyReturn {
   transcript: string;
   startMonitoring: () => Promise<void>;
   stopMonitoring: () => void;
+  /** Rolling live loudness (0..1) for the waveform box; newest value last.
+      Declared here because the hook returns it - without this line the
+      production build fails type checking. */
+  getAudioLevels: () => number[];
 }
 
 export function useAudioSafety(
