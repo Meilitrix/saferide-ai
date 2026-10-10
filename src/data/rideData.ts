@@ -126,7 +126,7 @@ export const RIDE_OPTIONS: RideOption[] = [
   {
     id: "abhi_pink",
     name: "Abhi Khwateen",
-    tier: "Female Captain",
+    tier: "Female Driver",
     description: "Dedicated fleet for women & families",
     capacity: 4,
     etaMin: 4,
@@ -139,7 +139,7 @@ export const RIDE_OPTIONS: RideOption[] = [
   },
 ];
 
-// Pakistani Drivers including prominent Female Captains for inDrive-style multi-driver selection!
+// Pakistani Drivers including prominent Female Drivers for inDrive-style multi-driver selection!
 export const AVAILABLE_PAKISTANI_DRIVERS: DriverProfile[] = [
   {
     id: "drv_fatima_01",
@@ -154,7 +154,7 @@ export const AVAILABLE_PAKISTANI_DRIVERS: DriverProfile[] = [
     photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     phone: "+92 301 4589210",
     audioSafetyCertified: true,
-    activeBadge: "🌸 Top Rated Female Captain • Women Safety Shield Certified",
+    activeBadge: "🌸 Top Rated Female Driver • Women Safety Shield Certified",
     fareOfferPkr: 460,
     distanceKm: 0.9,
     etaMinutes: 2,
@@ -208,7 +208,7 @@ export const AVAILABLE_PAKISTANI_DRIVERS: DriverProfile[] = [
     photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     phone: "+92 300 7823901",
     audioSafetyCertified: true,
-    activeBadge: "Verified Senior Captain • Abhi AI Safety Protocol Approved",
+    activeBadge: "Verified Senior Driver • Abhi AI Safety Protocol Approved",
     fareOfferPkr: 440,
     distanceKm: 0.8,
     etaMinutes: 2,
@@ -244,7 +244,7 @@ export const AVAILABLE_PAKISTANI_DRIVERS: DriverProfile[] = [
     photoUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
     phone: "+92 321 4458902",
     audioSafetyCertified: true,
-    activeBadge: "Premium Executive Captain • 5-Star Hospitality",
+    activeBadge: "Premium Executive Driver • 5-Star Hospitality",
     fareOfferPkr: 540,
     distanceKm: 2.1,
     etaMinutes: 5,

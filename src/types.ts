@@ -70,7 +70,7 @@ export interface AcousticEvent {
 export interface SpeechTranscriptEntry {
   id: string;
   timestamp: string;
-  speaker: "Rider (Aap)" | "Captain (Driver)" | "Unknown Ambient";
+  speaker: "Rider (Aap)" | "Driver" | "Unknown Ambient";
   text: string;
   tone: "Calm" | "Neutral" | "Irritated" | "Agitated" | "Hostile" | "Screaming" | "Pleading" | "Screaming/Pleading" | "Pleading/Emergency";
   distressFlag: boolean;

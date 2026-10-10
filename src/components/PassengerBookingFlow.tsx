@@ -93,8 +93,8 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
             {rideStatus === "SELECTING_DESTINATION" || rideStatus === "ROUTE_SELECTION"
               ? "Set Route"
               : rideStatus === "SEARCHING_DRIVER" || rideStatus === "CHOOSING_DRIVER"
-              ? "Captains Nearby"
-              : "Captain Arriving"}
+              ? "Drivers Nearby"
+              : "Driver Arriving"}
           </span>
         </div>
 
@@ -218,12 +218,6 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
       {/* ============================================================== */}
       {rideStatus === "ROUTE_SELECTION" && (
         <div className="p-4 space-y-3.5">
-          {/* Safety note */}
-          <div className="flex items-center gap-2 p-2.5 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-slate-300">
-            <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>All routes monitored by AI + Police 15</span>
-          </div>
-
           {/* Route list */}
           {routes.length > 0 ? (
             <div className="space-y-2">
@@ -280,14 +274,14 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
             </div>
           )}
 
-          {/* Continue to find captains */}
+          {/* Continue to find drivers */}
           <button
             onClick={handleSelectRouteAndContinue}
             disabled={routes.length === 0}
             className="w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-700 disabled:text-slate-500 text-slate-950 font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all"
           >
             <Radar className="w-4 h-4 text-slate-950" />
-            <span>Find Captains</span>
+            <span>Find Drivers</span>
           </button>
         </div>
       )}
@@ -300,7 +294,7 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Radar className="w-4 h-4 text-cyan-400 animate-spin" />
-              <h3 className="text-xs font-bold text-white">Nearby Captains</h3>
+              <h3 className="text-xs font-bold text-white">Nearby Drivers</h3>
             </div>
             <span className="text-xs text-slate-400">{availableDriversList.length} available</span>
           </div>

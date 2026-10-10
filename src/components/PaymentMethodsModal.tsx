@@ -50,7 +50,7 @@ export const PaymentMethodsModal: React.FC<PaymentMethodsModalProps> = ({
       id: "abhi_pay" as PaymentMethod,
       name: "Abhi Pay SafeWallet™",
       subtitle: "Rs. 1,450 balance available (with 5% ride cashback)",
-      badge: "RideShield Promo",
+      badge: "Abhi Promo",
       badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
       icon: ShieldCheck,
     },
@@ -64,7 +64,7 @@ export const PaymentMethodsModal: React.FC<PaymentMethodsModalProps> = ({
     },
     {
       id: "cash" as PaymentMethod,
-      name: "Cash to Captain",
+      name: "Cash to Driver",
       subtitle: "Pay physical Pakistani Rupees upon trip completion",
       badge: "Standard",
       badgeColor: "bg-slate-700 text-slate-300 border-slate-600",

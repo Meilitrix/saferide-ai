@@ -677,7 +677,7 @@ export default function App() {
                 <span className="font-semibold text-white capitalize">{selectedPaymentMethod.replace("_", " ")}</span>
               </div>
               <div className="flex justify-between text-slate-300">
-                <span>Captain:</span>
+                <span>Driver:</span>
                 <span className="font-semibold text-white">{selectedDriver.name}</span>
               </div>
             </div>

@@ -70,7 +70,7 @@ export const AIFeedbackModal: React.FC<AIFeedbackModalProps> = ({
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 AI Safety Usefulness Feedback
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
-                  RideShield™ AI
+                  Abhi AI
                 </span>
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">

@@ -55,7 +55,7 @@ export const WelcomeLanding: React.FC<WelcomeLandingProps> = ({
 
           <div>
             <h2 className="text-lg font-bold text-white">Ride</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Find nearby captains</p>
+            <p className="text-xs text-slate-400 mt-0.5">Find nearby drivers</p>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export const WelcomeLanding: React.FC<WelcomeLandingProps> = ({
 
           <div>
             <h2 className="text-lg font-bold text-white">Drive</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Join as a captain</p>
+            <p className="text-xs text-slate-400 mt-0.5">Join as a driver</p>
           </div>
         </div>
       </div>

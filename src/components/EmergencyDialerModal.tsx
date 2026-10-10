@@ -252,7 +252,7 @@ export const EmergencyDialerModal: React.FC<EmergencyDialerModalProps> = ({
             <div className="flex items-center justify-between text-slate-400">
               <span className="flex items-center gap-1">
                 <Car className="w-3.5 h-3.5 text-cyan-400" />
-                Assigned Captain:
+                Assigned Driver:
               </span>
               <span className="font-mono text-white text-[11px]">
                 {report?.vehicleDetails?.driverName || "Fatima Zahra"} (

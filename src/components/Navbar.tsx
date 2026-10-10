@@ -68,9 +68,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="text-xl font-bold tracking-tight text-white">
                   Abhi <span className="text-cyan-400">AI</span>
                 </span>
-                <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/60">
-                  RideShield™
-                </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">
                 Intelligent Ride Hailing & Active Audio Safety
@@ -164,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-white">Abhi AI Menu</h3>
-                    <p className="text-[10px] text-slate-400">RideShield™ Safety Hub</p>
+                    <p className="text-[10px] text-slate-400">Safety Hub</p>
                   </div>
                 </div>
                 <button
@@ -263,9 +260,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <PhoneCall className="w-4 h-4" />
                 <span>Call Punjab Police 15</span>
               </a>
-              <div className="text-[10px] text-slate-500 text-center">
-                Abhi AI RideShield v2.4 • Pakistan Safe City Network
-              </div>
             </div>
           </div>
         </div>
