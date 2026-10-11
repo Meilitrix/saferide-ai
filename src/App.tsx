@@ -337,9 +337,9 @@ export default function App() {
       isoTime: new Date().toISOString(),
       severity: "CRITICAL_SOS",
       category: "VOICE_DISTRESS_SCREAM",
-      summary: `SOS confirmed. Alerted ${emergencyNumber} and ${emergencyContacts.length} contacts.`,
-      detectedKeywords: ["sos_confirmed"],
-      transcriptSnippet: "EMERGENCY SOS CONFIRMED",
+      summary: `Automatic SOS: the safety countdown elapsed with no answer. Opening Police ${emergencyNumber}, Rescue 1122 and ${emergencyContacts.length} contacts.`,
+      detectedKeywords: ["auto_sos_countdown_elapsed"],
+      transcriptSnippet: "AUDIO SAFETY DIAL REACHED CRITICAL - NO RIDER RESPONSE",
       riderTone: "Emergency",
       driverTone: "Unknown",
       backgroundAcoustic: "UNKNOWN",
@@ -356,9 +356,10 @@ export default function App() {
       dispatchUnit: `POLICE ${emergencyNumber} / RESCUE 1122`,
       dialedNumber: emergencyNumber,
       actionsTaken: [
-        "SOS confirmed by rider",
-        `Alert sent to ${emergencyNumber}`,
-        `Notified ${emergencyContacts.length} contacts`,
+        "Audio Safety dial stayed at SOS level",
+        "Safety card shown; rider did not answer within the countdown",
+        `Emergency window opened for Police ${emergencyNumber} and Rescue 1122`,
+        `Notifying ${emergencyContacts.length} contacts`,
       ],
     };
     setLatestIncidentReport(incident);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { LifeBuoy, PhoneCall, ShieldCheck, Clock, Pause, Play } from "lucide-react";
 
 interface SosPromptModalProps {
@@ -9,6 +9,11 @@ interface SosPromptModalProps {
   emergencyNumber: string;
 }
 
+/** Seconds the rider gets to answer before the emergency window opens by
+ *  itself.  Named so it can be changed once, honestly, instead of in two
+ *  places (it used to be the literal 25 twice). */
+const AUTO_SOS_SECONDS = 25;
+
 export const SosPromptModal: React.FC<SosPromptModalProps> = ({
   isOpen,
   onConfirmSos,
@@ -17,32 +22,50 @@ export const SosPromptModal: React.FC<SosPromptModalProps> = ({
   // number printed here would be invented rather than measured.
   emergencyNumber,
 }) => {
-  const [countdown, setCountdown] = useState(25);
+  const [countdown, setCountdown] = useState(AUTO_SOS_SECONDS);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Auto-countdown timer
+  // The callback is kept in a ref ON PURPOSE.  App.tsx hands down a brand new
+  // function object on every render, and the ride re-renders every ~3 seconds as
+  // each audio chunk arrives.  Listing it as a dependency used to tear down and
+  // rebuild this 1-second interval on every chunk, so the countdown advanced one
+  // step per chunk instead of one per second and never reliably reached zero -
+  // the card appeared and nothing followed.  The interval now depends only on
+  // what it genuinely uses.
+  const confirmRef = useRef(onConfirmSos);
+  useEffect(() => {
+    confirmRef.current = onConfirmSos;
+  }, [onConfirmSos]);
+  const dispatchedRef = useRef(false);
+
+  // The tick only counts down.  Dispatching happens in its own effect below,
+  // because calling another component's state update from inside a state updater
+  // is a side effect React may run twice (<StrictMode> is on) or drop.
   useEffect(() => {
     if (!isOpen) {
-      setCountdown(25);
+      setCountdown(AUTO_SOS_SECONDS);
       setIsPaused(false);
+      dispatchedRef.current = false;
       return;
     }
 
     if (isPaused) return;
 
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          onConfirmSos();
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, isPaused, onConfirmSos]);
+  }, [isOpen, isPaused]);
+
+  // Exactly once, when the countdown truly reaches zero: open the emergency
+  // window, the same one the rider's manual SOS button opens.
+  useEffect(() => {
+    if (isOpen && !isPaused && countdown === 0 && !dispatchedRef.current) {
+      dispatchedRef.current = true;
+      confirmRef.current();
+    }
+  }, [isOpen, isPaused, countdown]);
 
   if (!isOpen) return null;
 
