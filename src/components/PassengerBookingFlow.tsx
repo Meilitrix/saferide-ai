@@ -236,7 +236,9 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      route.safetyLevel === "safe"
+                      route.safetyLevel === "unrated"
+                        ? "bg-slate-800/70 text-slate-400 border border-slate-700"
+                        : route.safetyLevel === "safe"
                         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                         : route.safetyLevel === "moderate"
                         ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
@@ -256,13 +258,21 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
                   </div>
                   <div className="text-right">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                      route.safetyLevel === "safe"
+                      route.safetyLevel === "unrated"
+                        ? "bg-slate-900 text-slate-400 border border-slate-700"
+                        : route.safetyLevel === "safe"
                         ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
                         : route.safetyLevel === "moderate"
                         ? "bg-amber-950 text-amber-300 border border-amber-800"
                         : "bg-red-950 text-red-300 border border-red-800"
                     }`}>
-                      {route.safetyLevel === "safe" ? "Safe" : route.safetyLevel === "moderate" ? "Moderate" : "Less safe"}
+                      {route.safetyLevel === "unrated"
+                        ? "Not rated yet"
+                        : route.safetyLevel === "safe"
+                        ? "Safe"
+                        : route.safetyLevel === "moderate"
+                        ? "Moderate"
+                        : "Less safe"}
                     </span>
                   </div>
                 </div>

@@ -246,7 +246,7 @@ export const EmergencyDialerModal: React.FC<EmergencyDialerModalProps> = ({
                 Live Telemetry:
               </span>
               <span className="font-mono text-white text-[11px]">
-                {report?.gpsCoordinates?.address || "Liberty Market, Lahore"}
+                {report?.gpsCoordinates?.address || "Live location unavailable"}
               </span>
             </div>
             <div className="flex items-center justify-between text-slate-400">

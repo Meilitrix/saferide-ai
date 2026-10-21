@@ -175,10 +175,8 @@ export default function App() {
       if (data.success && data.routes.length > 0) {
         setRoutes(data.routes);
         setRoutesPairKey(key);
-        const safest = data.routes.reduce((best: RouteOption, r: RouteOption) =>
-          r.safetyScore > best.safetyScore ? r : best
-        );
-        setSelectedRouteId(safest.id);
+        // Pre-select the real fastest route. No invented number decides this.
+        setSelectedRouteId(data.routes[0]?.id ?? null);
       } else if (!data.success || !data.routes || data.routes.length === 0) {
         setRoutes([]);
         setRoutesPairKey("");

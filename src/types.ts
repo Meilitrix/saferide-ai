@@ -167,7 +167,7 @@ export interface AIFeedbackRecord {
 
 // ── Route types ──────────────────────────────────────────────────────────────
 
-export type RouteSafetyLevel = "safe" | "moderate" | "less_safe";
+export type RouteSafetyLevel = "safe" | "moderate" | "less_safe" | "unrated";
 
 export interface RouteOption {
   id: string;
@@ -175,7 +175,7 @@ export interface RouteOption {
   distanceKm: number;
   durationMin: number;
   safetyLevel: RouteSafetyLevel;
-  safetyScore: number; // 0-100, higher = safer
+  safetyScore: number | null; // null until the evidence engine scores it
   summary: string; // e.g. "Via Canal Bank Road"
   color?: string; // map/card color when several real routes exist
 }

@@ -54,9 +54,11 @@ app.post("/api/analyze-audio", async (req, res) => {
       historyWindow = [], // last 30-60s samples
       consecutiveDistressCount = 0,
       scenarioId,
-      location = { lat: 37.7749, lng: -122.4194, address: "Market St & 4th St, San Francisco, CA" },
-      driver = { name: "Devon Patel", vehicle: "Silver Tesla Model 3", plate: "CA 8XYZ492" },
-      rider = { name: "Alex Morgan" },
+      // Honest fallbacks: an incident report must never invent a city, a car or
+      // a person. Unknown means the UI shows "unavailable", not San Francisco.
+      location = { lat: 0, lng: 0, address: "Live location unavailable" },
+      driver = { name: "Driver not linked", vehicle: "Unknown", plate: "Unknown" },
+      rider = { name: "Passenger" },
     } = req.body;
 
     const ai = getGeminiClient();
@@ -298,7 +300,7 @@ app.post("/api/emergency/dispatch", (req, res) => {
     targetAuthority: "City Police Department & Abhi 24/7 Safety Central",
     estimatedArrival: "3-5 mins",
     incidentId: incidentId || `INC-${Date.now().toString().slice(-6)}`,
-    location: location || { lat: 37.7749, lng: -122.4194, address: "Market St & 4th St, San Francisco, CA" },
+    location: location || { lat: 0, lng: 0, address: "Live location unavailable" },
     dispatchedAt: new Date().toISOString(),
     protocol: "CODE_RED_AUTOMATED_SAFETY_INTERVENTION",
   });
@@ -375,10 +377,12 @@ app.get("/api/routes", async (req, res) => {
       const distKm = +(route.distance / 1000).toFixed(1);
       const durMin = +(route.duration / 60).toFixed(0);
 
-      // Simulated safety score based on route properties
-      const baseScore = 75 - (distKm * 1.5) - (durMin * 0.3);
-      const indexBonus = [8, 0, -5][idx] ?? 0;
-      let safetyScore = Math.round(Math.max(20, Math.min(95, baseScore + indexBonus)));
+      // NO SAFETY SCORE IS COMPUTED HERE ANY MORE.
+      // The deleted formula was: 75 - km*1.5 - min*0.3 + a bonus for being first
+      // in OSRM's list. That is an efficiency number wearing a safety label, and
+      // the label was the lie. The real score arrives in Phase 2 from OpenStreetMap
+      // evidence (road type, venue density, mapped services, isolated stretches).
+      // Until then we return null and the UI says so out loud.
 
       // Derive summary from first road name in steps
       let summary = `Route ${idx + 1}`;
@@ -387,7 +391,7 @@ app.get("/api/routes", async (req, res) => {
         if (namedStep) summary = `Via ${namedStep.name}`;
       }
 
-      const safetyLevel = safetyScore >= 70 ? "safe" : safetyScore >= 45 ? "moderate" : "less_safe";
+      const safetyLevel = "unrated";
 
       return {
         id: `route_${idx}`,
@@ -395,7 +399,8 @@ app.get("/api/routes", async (req, res) => {
         distanceKm: distKm,
         durationMin: durMin,
         safetyLevel,
-        safetyScore,
+        safetyScore: null,
+        evidenceStatus: "not_scored_yet",
         summary,
       };
     });
@@ -408,8 +413,9 @@ app.get("/api/routes", async (req, res) => {
       console.log("/api/routes: 1 real route, no alternatives for this pair");
     }
 
-    // Sort by safety score (safest first)
-    routes.sort((a, b) => b.safetyScore - a.safetyScore);
+    // Order by the only real facts we have: fastest first, then shortest.
+    // (When Phase 2 evidence lands, this becomes the safety ranking.)
+    routes.sort((a, b) => a.durationMin - b.durationMin || a.distanceKm - b.distanceKm);
 
     // 1A.2: give every route a road name that the OTHER routes do not use,
     // so two alternatives can never both be labeled "Via IJP Road". This is
