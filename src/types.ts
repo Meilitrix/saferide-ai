@@ -177,6 +177,7 @@ export interface RouteOption {
   safetyLevel: RouteSafetyLevel;
   safetyScore: number; // 0-100, higher = safer
   summary: string; // e.g. "Via Canal Bank Road"
+  color?: string; // map/card color when several real routes exist
 }
 
 export interface DeviationAlert {

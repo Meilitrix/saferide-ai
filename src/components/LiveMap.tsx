@@ -28,7 +28,14 @@ interface LiveMapProps {
   deviationPosition: { lat: number; lng: number } | null;
 }
 
-type MapTheme = "dark" | "satellite" | "osm";
+// Free tile sources - no API key, no watermark:
+// OSM standard = normal street map (inDrive-style), Esri = satellite imagery.
+// CARTO basemaps were dropped: they now stamp "API KEY REQUIRED" over tiles.
+type MapTheme = "osm" | "satellite";
+const TILE_URLS: Record<MapTheme, string> = {
+  osm: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+};
 
 export const LiveMap: React.FC<LiveMapProps> = ({
   pickup,
@@ -52,7 +59,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   const nearbyMarkersRef = useRef<L.Marker[]>([]);
   const deviationMarkerRef = useRef<L.Marker | null>(null);
 
-  const [mapTheme, setMapTheme] = useState<MapTheme>("dark");
+  const [mapTheme, setMapTheme] = useState<MapTheme>("osm");
   const [nearbyDrivers, setNearbyDrivers] = useState(NEARBY_DRIVERS_MAP);
 
   // Use selected route geometry or fallback to straight line
@@ -63,9 +70,11 @@ export const LiveMap: React.FC<LiveMapProps> = ({
 
   const routeCoordinates = useMemo<[number, number][]>(() => {
     if (activeRoute && activeRoute.geometry.length > 0) return activeRoute.geometry;
+    // No fake straight line between pins any more: until a real OSRM route
+    // arrives, the car simply waits at the pickup point.
     return [
       [pickup.lat, pickup.lng],
-      [dropoff.lat, dropoff.lng],
+      [pickup.lat, pickup.lng],
     ];
   }, [activeRoute, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng]);
 
@@ -121,19 +130,16 @@ export const LiveMap: React.FC<LiveMapProps> = ({
       center: [centerLat, centerLng],
       zoom: 13,
       zoomControl: false,
-      attributionControl: false,
+      attributionControl: true,
     });
 
     mapInstanceRef.current = map;
 
-    const tileUrl =
-      mapTheme === "dark"
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : mapTheme === "dark"
-        ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-
-    const tileLayer = L.tileLayer(tileUrl, { maxZoom: 19, subdomains: "abcd" }).addTo(map);
+    const tileLayer = L.tileLayer(TILE_URLS[mapTheme], {
+      maxZoom: 19,
+      subdomains: "abc",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
     tileLayerRef.current = tileLayer;
 
     return () => {
@@ -145,13 +151,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   // Update tile layer on theme change
   useEffect(() => {
     if (!mapInstanceRef.current || !tileLayerRef.current) return;
-    const tileUrl =
-      mapTheme === "dark"
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : mapTheme === "dark"
-        ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-    tileLayerRef.current.setUrl(tileUrl);
+    tileLayerRef.current.setUrl(TILE_URLS[mapTheme]);
   }, [mapTheme]);
 
   // Render route polylines (selected = solid, alternatives = faded)
@@ -163,7 +163,19 @@ export const LiveMap: React.FC<LiveMapProps> = ({
     routePolylinesRef.current.forEach((p) => p.remove());
     routePolylinesRef.current = [];
 
-    if (routes.length === 0) return;
+        // Paths are back (2026-10-21) but structurally honest: App only ever
+    // passes routes that belong to the CURRENT pickup/dropoff pair, so a
+    // line can never depict someone else's journey. No data = no lines,
+    // just the two pins framed in view.
+    if (routes.length === 0) {
+      if (pickup && dropoff) {
+        map.fitBounds(
+          [[pickup.lat, pickup.lng], [dropoff.lat, dropoff.lng]] as L.LatLngExpression[],
+          { padding: [60, 60] }
+        );
+      }
+      return;
+    }
 
     // Draw alternative routes first (faded)
     routes.forEach((route) => {
@@ -171,7 +183,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
       if (isSelected) return; // draw selected last so it's on top
 
       const line = L.polyline(route.geometry, {
-        color: "#475569",
+        color: route.color || "#475569",
         weight: 4,
         opacity: 0.4,
         dashArray: "8, 8",
@@ -195,7 +207,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
 
     // Fit bounds
     map.fitBounds(selectedLine.getBounds(), { padding: [50, 50] });
-  }, [routes, selectedRouteId, threatLevel]);
+  }, [routes, selectedRouteId, threatLevel, pickup?.lat, pickup?.lng, dropoff?.lat, dropoff?.lng]);
 
   // Pickup / Dropoff markers
   useEffect(() => {
@@ -376,7 +388,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({
       <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
         <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1 rounded-xl shadow-xl flex flex-col gap-1">
           <button
-            onClick={() => setMapTheme((c) => (c === "dark" ? "satellite" : c === "satellite" ? "osm" : "dark"))}
+            onClick={() => setMapTheme((c) => (c === "osm" ? "satellite" : "osm"))}
             className="p-2 text-slate-300 hover:text-cyan-400 hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center"
             title="Map style"
           >

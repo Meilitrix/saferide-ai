@@ -222,7 +222,7 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
           {routes.length > 0 ? (
             <div className="space-y-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-                Choose your route
+                {routes.length > 1 ? "Choose your route" : "Verified route for this trip"}
               </span>
               {routes.map((route) => (
                 <div
@@ -245,7 +245,7 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
                       <Navigation className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-white block">{route.summary}</span>
+                      <span className="text-xs font-bold text-white block"><span style={{ color: route.color || "#94a3b8" }}>●</span> {route.summary}</span>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[11px] text-slate-400 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {route.durationMin} min
@@ -267,6 +267,11 @@ export const PassengerBookingFlow: React.FC<PassengerBookingFlowProps> = ({
                   </div>
                 </div>
               ))}
+              {routes.length === 1 && (
+                <div className="text-[10px] text-slate-500 px-1">
+                  Only one credible route exists for this pair — nothing was invented to fill the list.
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-6 text-slate-500 text-xs">

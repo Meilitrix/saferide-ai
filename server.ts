@@ -1,5 +1,7 @@
 ﻿import express from "express";
 import path from "path";
+import fs from "fs";
+import os from "os";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
@@ -305,6 +307,25 @@ app.post("/api/emergency/dispatch", (req, res) => {
 // ── Route Planning (OSRM) ────────────────────────────────────────────────────
 
 // Fetch alternative routes from OSRM with simulated safety scoring
+// The public OSRM demo server is shared and rate-limited. We add a
+// timeout + single retry, and cache the last successful answer per pair
+// on disk, so demo routes render even if OSRM is having a bad minute.
+// Cache lives in the OS temp dir, NOT the project folder: a file written
+// inside the project can poke the Vite dev watcher and force browser
+// reloads mid-session (the "screen came back on its own" symptom).
+const ROUTE_CACHE_FILE = path.join(os.tmpdir(), "abhi_route_cache.json");
+const routeCache: Record<string, any> = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(ROUTE_CACHE_FILE, "utf8"));
+  } catch {
+    return {};
+  }
+})();
+
+// One color per real route so two alternatives never look like the same
+// line twice. Assignment happens AFTER ranking (safest = first color).
+const ROUTE_COLORS = ["#0284c7", "#f59e0b", "#a855f7"];
+
 app.get("/api/routes", async (req, res) => {
   try {
     const { pickup_lat, pickup_lng, drop_lat, drop_lng } = req.query;
@@ -313,11 +334,32 @@ app.get("/api/routes", async (req, res) => {
       return res.status(400).json({ error: "Missing coordinates" });
     }
 
-    const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${pickup_lng},${pickup_lat};${drop_lng},${drop_lat}?overview=full&geometries=geojson&alternatives=2&steps=true`;
+    const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${pickup_lng},${pickup_lat};${drop_lng},${drop_lat}?overview=full&geometries=geojson&alternatives=3&steps=true`;
+    const cacheKey = `${pickup_lat},${pickup_lng};${drop_lat},${drop_lng}`;
 
-    const osrmRes = await fetch(osrmUrl);
-    if (!osrmRes.ok) throw new Error(`OSRM returned ${osrmRes.status}`);
-    const data = await osrmRes.json() as any;
+    if (routeCache[cacheKey]) {
+      res.json({ ...routeCache[cacheKey], cached: true });
+      return;
+    }
+
+    const fetchOsrm = async () => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 12000);
+      try {
+        const r = await fetch(osrmUrl, { signal: ctrl.signal });
+        if (!r.ok) throw new Error(`OSRM returned ${r.status}`);
+        return (await r.json()) as any;
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
+    let data: any;
+    try {
+      data = await fetchOsrm();
+    } catch {
+      data = await fetchOsrm(); // one retry, then the catch block reports honestly
+    }
 
     if (!data.routes || data.routes.length === 0) {
       return res.status(502).json({ error: "No routes found" });
@@ -358,56 +400,51 @@ app.get("/api/routes", async (req, res) => {
       };
     });
 
-    // If OSRM only returned 1 route, generate 2 simulated alternatives
-    if (routes.length === 1 && routes[0].geometry.length > 2) {
-      const baseRoute = routes[0];
-      const baseCoords = baseRoute.geometry;
-      
-      // Generate alternative route 1: slightly offset (parallel road)
-      const alt1Coords: [number, number][] = baseCoords.map((c, i) => {
-        if (i === 0 || i === baseCoords.length - 1) return c;
-        const offset = 0.002;
-        return [c[0] + offset, c[1] + offset * 0.5] as [number, number];
-      });
-      const alt1Dist = +(baseRoute.distanceKm * 1.15).toFixed(1);
-      const alt1Dur = Math.round(baseRoute.durationMin * 1.2);
-      const alt1Score = Math.max(20, baseRoute.safetyScore - 15);
-      
-      // Generate alternative route 2: different offset
-      const alt2Coords: [number, number][] = baseCoords.map((c, i) => {
-        if (i === 0 || i === baseCoords.length - 1) return c;
-        const offset = -0.0015;
-        return [c[0] + offset, c[1] - offset * 0.7] as [number, number];
-      });
-      const alt2Dist = +(baseRoute.distanceKm * 0.95).toFixed(1);
-      const alt2Dur = Math.round(baseRoute.durationMin * 0.9);
-      const alt2Score = Math.min(95, baseRoute.safetyScore + 10);
-
-      routes.push({
-        id: `route_1`,
-        geometry: alt1Coords,
-        distanceKm: alt1Dist,
-        durationMin: alt1Dur,
-        safetyLevel: alt1Score >= 70 ? "safe" : alt1Score >= 45 ? "moderate" : "less_safe",
-        safetyScore: alt1Score,
-        summary: `Via ${["Side Road", "Back Street", "Alternative Path"][Math.floor(Math.random() * 3)]}`,
-      });
-      
-      routes.push({
-        id: `route_2`,
-        geometry: alt2Coords,
-        distanceKm: alt2Dist,
-        durationMin: alt2Dur,
-        safetyLevel: alt2Score >= 70 ? "safe" : alt2Score >= 45 ? "moderate" : "less_safe",
-        safetyScore: alt2Score,
-        summary: `Via ${["Main Road", "Highway", "Direct Route"][Math.floor(Math.random() * 3)]}`,
-      });
+    // Fabricated alternative routes removed: the old code copied the single
+    // OSRM result and offset it a few metres to fake extra 'routes' with
+    // invented names and scores. They drew lines that weren't on any road.
+    // We now show only what OSRM actually found - even if that's just one.
+    if (routes.length === 1) {
+      console.log("/api/routes: 1 real route, no alternatives for this pair");
     }
 
     // Sort by safety score (safest first)
     routes.sort((a, b) => b.safetyScore - a.safetyScore);
 
-    res.json({ success: true, routes });
+    // 1A.2: give every route a road name that the OTHER routes do not use,
+    // so two alternatives can never both be labeled "Via IJP Road". This is
+    // still 100% OSRM step data - we only pick which real name to display.
+    {
+      const stepSets = data.routes.map((r: any) => {
+        const set = new Set<string>();
+        (((r.legs && r.legs[0] && r.legs[0].steps) || []) as any[]).forEach((st) => {
+          if (st.name && st.name.length > 2) set.add(st.name);
+        });
+        return set;
+      });
+      routes.forEach((routeOut: any) => {
+        const origIdx = Number(String(routeOut.id).split("_")[1]);
+        const others = new Set<string>();
+        stepSets.forEach((set, j) => { if (j !== origIdx) set.forEach((n) => others.add(n)); });
+        const steps: any[] = (data.routes[origIdx]?.legs?.[0]?.steps) || [];
+        const latin = (st: any) => /[a-zA-Z]/.test(String(st.name || ""));
+        const unique = steps.find((st) => st.name && st.name.length > 2 && !others.has(st.name) && latin(st))
+          || steps.find((st) => st.name && st.name.length > 2 && !others.has(st.name));
+        const first = steps.find((st) => st.name && st.name.length > 2 && latin(st))
+          || steps.find((st) => st.name && st.name.length > 2);
+        routeOut.summary = unique ? `Via ${unique.name}` : first ? `Via ${first.name}` : `Route ${origIdx + 1}`;
+        routeOut.color = ROUTE_COLORS[routes.indexOf(routeOut) % ROUTE_COLORS.length];
+      });
+    }
+
+    const payload = { success: true, routes, singleRoute: routes.length === 1 };
+    routeCache[cacheKey] = payload;
+    try {
+      fs.writeFileSync(ROUTE_CACHE_FILE, JSON.stringify(routeCache));
+    } catch {
+      /* cache write is best-effort */
+    }
+    res.json(payload);
   } catch (err: any) {
     console.error("/api/routes error:", err);
     res.status(500).json({ success: false, error: err.message });

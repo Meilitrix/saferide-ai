@@ -66,7 +66,21 @@ const INITIAL_EMERGENCY_CONTACTS: EmergencyContact[] = [
 
 export default function App() {
   // ── Core ride state ──────────────────────────────────────────────
-  const [rideStatus, setRideStatus] = useState<RideStatus>("WELCOME_LANDING");
+  // ── Dev shortcut: open any screen directly with ?stage=... in the URL ──
+  // ?stage=landing | select | routes | searching | choosing | assigned | trip
+  const STAGE_URL_MAP: Record<string, RideStatus> = {
+    landing: "WELCOME_LANDING",
+    select: "SELECTING_DESTINATION",
+    routes: "ROUTE_SELECTION",
+    searching: "SEARCHING_DRIVER",
+    choosing: "CHOOSING_DRIVER",
+    assigned: "DRIVER_ASSIGNED",
+    trip: "IN_TRIP",
+  };
+  const initialStage =
+    STAGE_URL_MAP[new URLSearchParams(window.location.search).get("stage") || ""] ||
+    "WELCOME_LANDING";
+  const [rideStatus, setRideStatus] = useState<RideStatus>(initialStage);
   const [pickup, setPickup] = useState<LocationItem>(POPULAR_LOCATIONS[0]);
   const [dropoff, setDropoff] = useState<LocationItem>(POPULAR_LOCATIONS[1]);
   const [selectedDriver, setSelectedDriver] = useState<DriverProfile>(AVAILABLE_PAKISTANI_DRIVERS[0]);
@@ -74,6 +88,9 @@ export default function App() {
 
   // ── Route state ──────────────────────────────────────────────────
   const [routes, setRoutes] = useState<RouteOption[]>([]);
+  // Which pickup/dropoff pair the routes above actually belong to.
+  const [routesPairKey, setRoutesPairKey] = useState<string>("");
+  const pendingPairKeyRef = useRef<string>("");
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [deviationPosition, setDeviationPosition] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -142,6 +159,8 @@ export default function App() {
 
   // ── Fetch routes when user picks locations ──────────────────────
   const fetchRoutes = useCallback(async () => {
+    const key = `${pickup.lat},${pickup.lng};${dropoff.lat},${dropoff.lng}`;
+    if (key !== pendingPairKeyRef.current) return; // stale request, drop it
     try {
       const params = new URLSearchParams({
         pickup_lat: String(pickup.lat),
@@ -151,24 +170,59 @@ export default function App() {
       });
       const res = await fetch(`/api/routes?${params}`);
       const data = await res.json();
+      // The pair may have changed while we awaited the network: re-check.
+      if (key !== pendingPairKeyRef.current) return;
       if (data.success && data.routes.length > 0) {
         setRoutes(data.routes);
+        setRoutesPairKey(key);
         const safest = data.routes.reduce((best: RouteOption, r: RouteOption) =>
           r.safetyScore > best.safetyScore ? r : best
         );
         setSelectedRouteId(safest.id);
+      } else if (!data.success || !data.routes || data.routes.length === 0) {
+        setRoutes([]);
+        setRoutesPairKey("");
       }
     } catch (err) {
       console.warn("Route fetch failed:", err);
     }
   }, [pickup, dropoff]);
 
-  // Auto-fetch routes when entering route selection
+  // Routes are bound to the EXACT pair: any location change clears them
+  // and fetches fresh. The old "routes.length === 0" gate kept stale
+  // geometry from a previous pair visible - removed by order 2026-10-21.
+  const routePairKey = `${pickup.lat},${pickup.lng};${dropoff.lat},${dropoff.lng}`;
+  // ONLY pair-matched routes are ever given to the UI. If the stored routes
+  // belong to any other pickup/dropoff, the UI sees an empty list (loading
+  // state) - never leftovers from a previous journey.
+  const visibleRoutes = routesPairKey === routePairKey ? routes : [];
   useEffect(() => {
-    if (rideStatus === "ROUTE_SELECTION" && routes.length === 0) {
+    const wantsRoutes =
+      rideStatus === "ROUTE_SELECTION" ||
+      rideStatus === "DRIVER_ASSIGNED" ||
+      rideStatus === "IN_TRIP";
+    if (!wantsRoutes) return;
+    if (pendingPairKeyRef.current !== routePairKey) {
+      pendingPairKeyRef.current = routePairKey;
+      setRoutes([]);
+      setRoutesPairKey("");
+      setSelectedRouteId(null);
       fetchRoutes();
     }
-  }, [rideStatus, routes.length, fetchRoutes]);
+    // A dev shortcut URL (?stage=...) that refreshes mid-session would
+    // otherwise teleport the page; consume it once.
+  }, [rideStatus, routePairKey, fetchRoutes]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const p = new URLSearchParams(window.location.search);
+      if (p.has("stage")) {
+        p.delete("stage");
+        const q = p.toString();
+        window.history.replaceState(null, "", window.location.pathname + (q ? "?" + q : ""));
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, []);
 
   // ── Route deviation detection ────────────────────────────────────
   useEffect(() => {
@@ -490,7 +544,7 @@ export default function App() {
                 tripProgress={tripProgress}
                 selectedDriver={selectedDriver}
                 isAudioMonitoring={isAudioMonitoringActive}
-                routes={routes}
+                routes={visibleRoutes}
                 selectedRouteId={selectedRouteId}
                 deviationPosition={deviationPosition}
               />
@@ -510,7 +564,7 @@ export default function App() {
                 onSelectDriverAndProceed={handleSelectDriverAndProceed}
                 onStartTrip={handleStartTrip}
                 onCancelRide={handleResetRide}
-                routes={routes}
+                routes={visibleRoutes}
                 selectedRouteId={selectedRouteId}
                 onSelectRoute={setSelectedRouteId}
               />
@@ -533,7 +587,7 @@ export default function App() {
                   tripProgress={tripProgress}
                   selectedDriver={selectedDriver}
                   isAudioMonitoring={isAudioMonitoringActive}
-                  routes={routes}
+                  routes={visibleRoutes}
                   selectedRouteId={selectedRouteId}
                   deviationPosition={deviationPosition}
                 />
@@ -567,9 +621,9 @@ export default function App() {
             </div>
 
             {/* Route selector (compact) */}
-            {routes.length > 1 && (
+            {visibleRoutes.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {routes.map((route) => (
+                {visibleRoutes.map((route) => (
                   <button
                     key={route.id}
                     onClick={() => setSelectedRouteId(route.id)}
@@ -579,7 +633,7 @@ export default function App() {
                         : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
                     }`}
                   >
-                    <span className="block">{route.summary}</span>
+                    <span className="block"><span style={{ color: route.color || "#94a3b8" }}>●</span> {route.summary}</span>
                     <span className="text-[10px] font-mono opacity-70">
                       {route.distanceKm} km · {route.durationMin} min
                     </span>
@@ -596,6 +650,12 @@ export default function App() {
                     </span>
                   </button>
                 ))}
+              </div>
+            )}
+
+            {visibleRoutes.length === 1 && (
+              <div className="text-[10px] text-slate-400 bg-slate-900/70 border border-slate-800 rounded-xl px-3 py-2">
+                1 verified route for this trip — the map found no second credible option here.
               </div>
             )}
 
