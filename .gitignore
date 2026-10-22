@@ -48,3 +48,6 @@ github_setup.bat
 .idea/
 *.swp
 *.swo
+# Demo/sample audio clips are NOT published with this repo.
+# They stay local (needed by the engine); see the private full bundle.
+audio-safety-ai/sfx_training/
